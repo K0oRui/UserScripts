@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# OS files
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/*.code-snippets
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# opencode
+.opencode/
+
+# browser tooling artifacts
+.playwright-mcp/

@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Userscripts</title>
+        <meta name="description" content="Two userscripts for Steam pages, published as readable source." />
+        <meta name="color-scheme" content="dark" />
+        <meta name="theme-color" content="#0a0a0a" />
+        <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%230a0a0a'/><rect x='4' y='4' width='8' height='8' fill='%23f4f4f4'/></svg>"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" defer></script>
+        <style>
+            :root {
+                --bg: #0a0a0a;
+                --panel: #101010;
+                --bar: #161616;
+                --line: #2a2a2a;
+                --line-soft: #1e1e1e;
+                --ink: #f4f4f4;
+                --dim: #a3a3a3;
+                --faint: #7f7f7f;
+                --accent: #ffffff;
+                --accent-ink: #0a0a0a;
+                --hover: #e8e8e8;
+                --active: #d6d6d6;
+                --radius-sm: 4px;
+                --radius-md: 8px;
+                --radius-lg: 12px;
+                --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+                --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            html {
+                scrollbar-color: #3a3a3a var(--bg);
+            }
+            body {
+                min-height: 100vh;
+                background: var(--bg);
+                color: var(--ink);
+                font: 14px/1.6 var(--sans);
+                font-variant-numeric: tabular-nums;
+                -webkit-font-smoothing: antialiased;
+            }
+            a {
+                color: inherit;
+            }
+            button {
+                font: inherit;
+                color: inherit;
+            }
+            :focus-visible {
+                outline: 2px solid rgba(255, 255, 255, 0.55);
+                outline-offset: 2px;
+            }
+            ::selection {
+                background: #3d3d3d;
+                color: #fff;
+            }
+
+            .wrap {
+                width: 100%;
+                padding: 0 32px;
+            }
+
+            .skip-link {
+                position: absolute;
+                left: 16px;
+                top: -48px;
+                z-index: 60;
+                padding: 8px 16px;
+                background: var(--accent);
+                color: var(--accent-ink);
+                font-size: 12px;
+                font-weight: 600;
+                text-decoration: none;
+                border-radius: var(--radius-md);
+            }
+            .skip-link:focus {
+                top: 16px;
+            }
+
+            .layout {
+                display: grid;
+                grid-template-columns: 272px minmax(0, 1fr);
+                gap: 48px;
+                padding-top: 48px;
+                padding-bottom: 48px;
+            }
+
+            .index {
+                position: sticky;
+                top: 24px;
+                align-self: start;
+                display: grid;
+                gap: 8px;
+            }
+            .index-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0 16px 8px;
+                border-bottom: 1px solid var(--line);
+                font: 600 12px/1 var(--mono);
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--faint);
+            }
+            .row {
+                display: grid;
+                grid-template-columns: 32px minmax(0, 1fr);
+                gap: 16px;
+                align-items: center;
+                width: 100%;
+                padding: 16px;
+                border: 1px solid transparent;
+                border-radius: var(--radius-lg);
+                background: transparent;
+                text-align: left;
+                cursor: pointer;
+                transition:
+                    background 0.12s ease,
+                    border-color 0.12s ease;
+            }
+            .row:hover {
+                background: #141414;
+                border-color: #262626;
+            }
+            .row[aria-current='true'] {
+                background: var(--panel);
+                border-color: #333;
+            }
+            .row-mark {
+                display: grid;
+                place-items: center;
+                width: 32px;
+                height: 32px;
+                border: 1px solid var(--line);
+                border-radius: var(--radius-md);
+                background: #151515;
+                color: var(--dim);
+                transition:
+                    background 0.12s ease,
+                    border-color 0.12s ease,
+                    color 0.12s ease;
+            }
+            .row-mark svg {
+                width: 16px;
+                height: 16px;
+            }
+            .row:hover .row-mark {
+                border-color: #3a3a3a;
+                color: var(--ink);
+            }
+            .row[aria-current='true'] .row-mark {
+                background: var(--ink);
+                border-color: var(--ink);
+                color: var(--accent-ink);
+            }
+            .row-name {
+                display: block;
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--dim);
+                letter-spacing: -0.005em;
+            }
+            .row[aria-current='true'] .row-name {
+                color: var(--ink);
+            }
+            .row-desc {
+                display: block;
+                margin-top: 4px;
+                font-size: 12px;
+                line-height: 1.45;
+                color: var(--faint);
+            }
+
+            .detail {
+                min-width: 0;
+            }
+            .detail-head {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 32px;
+            }
+            .kicker {
+                font: 600 12px/1 var(--mono);
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--faint);
+            }
+            .detail h1 {
+                margin: 8px 0;
+                font-size: 32px;
+                line-height: 1.15;
+                font-weight: 600;
+                letter-spacing: -0.02em;
+            }
+            .summary {
+                max-width: 58ch;
+                font-size: 14px;
+                color: var(--dim);
+            }
+            .actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex: none;
+                padding-top: 4px;
+            }
+            .install {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                height: 40px;
+                padding: 0 16px;
+                background: var(--accent);
+                color: var(--accent-ink);
+                border-radius: var(--radius-md);
+                font-size: 14px;
+                font-weight: 600;
+                text-decoration: none;
+                transition: background 0.12s ease;
+            }
+            .install:hover {
+                background: var(--hover);
+            }
+            .install:active {
+                background: var(--active);
+            }
+            .install svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            .specs {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                margin-top: 32px;
+                border: 1px solid var(--line);
+                border-radius: var(--radius-md);
+                overflow: hidden;
+            }
+            .spec {
+                padding: 16px;
+            }
+            .spec + .spec {
+                border-left: 1px solid var(--line-soft);
+            }
+            .spec dt {
+                font: 600 12px/1 var(--mono);
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--faint);
+            }
+            .spec dd {
+                margin-top: 8px;
+                font: 13px/1.3 var(--mono);
+                color: var(--ink);
+            }
+            .hosts {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 16px;
+                font: 12px/1.5 var(--mono);
+                color: var(--faint);
+            }
+            .hosts span:first-child {
+                font-family: var(--sans);
+                font-size: 12px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--faint);
+            }
+            .hosts span + span::before {
+                content: '·';
+                margin-right: 8px;
+                color: #4d4d4d;
+            }
+
+            .notes {
+                list-style: none;
+                margin-top: 24px;
+                display: grid;
+                gap: 8px;
+                max-width: 72ch;
+            }
+            .notes li {
+                position: relative;
+                padding-left: 16px;
+                font-size: 14px;
+                line-height: 1.55;
+                color: var(--dim);
+            }
+            .notes li::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 9px;
+                width: 4px;
+                height: 4px;
+                background: var(--ink);
+            }
+
+            .source {
+                margin-top: 32px;
+                border: 1px solid var(--line);
+                border-radius: var(--radius-lg);
+                overflow: hidden;
+                background: var(--panel);
+            }
+            .source-bar {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                height: 40px;
+                padding: 0 8px 0 16px;
+                background: var(--bar);
+                border-bottom: 1px solid var(--line);
+                font: 12px/1 var(--mono);
+                color: var(--faint);
+            }
+            .file-name {
+                color: var(--ink);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .source-meta {
+                margin-left: auto;
+                white-space: nowrap;
+            }
+            .source-open {
+                flex: none;
+                padding: 8px;
+                border-radius: var(--radius-sm);
+                color: var(--dim);
+                text-decoration: none;
+            }
+            .source-open:hover {
+                color: var(--ink);
+                background: #222;
+            }
+
+            .code-scroll {
+                max-height: min(62vh, 720px);
+                overflow: auto;
+                scrollbar-color: #3a3a3a var(--panel);
+            }
+            .code-scroll.is-panning {
+                cursor: grabbing;
+                user-select: none;
+            }
+            .code-grid {
+                display: grid;
+                grid-template-columns: max-content max-content;
+                width: max-content;
+                min-width: 100%;
+            }
+            .gutter {
+                position: sticky;
+                left: 0;
+                z-index: 1;
+                padding: 16px 16px 24px;
+                text-align: right;
+                color: #808080;
+                background: var(--panel);
+                border-right: 1px solid var(--line-soft);
+                user-select: none;
+                font: 13px/1.7 var(--mono);
+            }
+            .gutter span {
+                display: block;
+            }
+            pre {
+                padding: 16px 24px 24px 16px;
+                font: 13px/1.7 var(--mono);
+                color: #d4d4d4;
+                tab-size: 4;
+            }
+            code {
+                font: inherit;
+                white-space: pre;
+            }
+
+            .token.comment,
+            .token.prolog,
+            .token.doctype,
+            .token.cdata {
+                color: #7f7f7f;
+                font-style: italic;
+            }
+            .token.punctuation {
+                color: #8c8c8c;
+            }
+            .token.property,
+            .token.tag,
+            .token.boolean,
+            .token.number,
+            .token.constant,
+            .token.symbol,
+            .token.deleted {
+                color: #cfcfcf;
+            }
+            .token.selector,
+            .token.attr-name,
+            .token.string,
+            .token.char,
+            .token.builtin,
+            .token.inserted {
+                color: #b0b0b0;
+            }
+            .token.operator,
+            .token.entity,
+            .token.url {
+                color: #9a9a9a;
+            }
+            .token.atrule,
+            .token.attr-value,
+            .token.keyword {
+                color: #ffffff;
+                font-weight: 600;
+            }
+            .token.function,
+            .token.maybe-class-name,
+            .token.regex,
+            .token.important,
+            .token.variable {
+                color: #e4e4e4;
+            }
+            .token.important,
+            .token.bold {
+                font-weight: 600;
+            }
+            .token.italic {
+                font-style: italic;
+            }
+
+            @media (max-width: 860px) {
+                .layout {
+                    grid-template-columns: 1fr;
+                    gap: 32px;
+                }
+                .index {
+                    position: static;
+                }
+            }
+
+            @media (max-width: 620px) {
+                .wrap {
+                    padding: 0 16px;
+                }
+                .layout {
+                    padding-top: 32px;
+                }
+                .detail-head {
+                    flex-direction: column;
+                    gap: 24px;
+                }
+                .detail h1 {
+                    font-size: 24px;
+                }
+                .actions {
+                    width: 100%;
+                }
+                .install {
+                    height: 44px;
+                    flex: 1;
+                    justify-content: center;
+                }
+                .source-bar {
+                    height: 48px;
+                    gap: 8px;
+                }
+                .source-open {
+                    padding: 12px 8px;
+                }
+                .source-meta {
+                    display: none;
+                }
+                .code-scroll {
+                    max-height: 56vh;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                *,
+                *::before,
+                *::after {
+                    transition: none !important;
+                    animation: none !important;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <a class="skip-link" href="#source">Skip to source</a>
+
+        <main class="wrap layout">
+            <aside class="index" aria-label="Scripts">
+                <div class="index-head"><span>Index</span><span>02</span></div>
+                <button class="row" type="button" data-id="rinlink" aria-current="true">
+                    <span class="row-mark" aria-hidden="true">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6.6 9.4 9.4 6.6" />
+                            <path d="M7.6 4.4 9 3a3 3 0 0 1 4.2 4.2L11.8 8.6" />
+                            <path d="M8.4 11.6 7 13A3 3 0 0 1 2.8 8.8L4.2 7.4" />
+                        </svg>
+                    </span>
+                    <span>
+                        <span class="row-name">RINLink</span>
+                        <span class="row-desc">Steam, SteamDB, PCGamingWiki</span>
+                    </span>
+                </button>
+                <button class="row" type="button" data-id="steamdb-emu-tools">
+                    <span class="row-mark" aria-hidden="true">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" />
+                            <path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5" />
+                        </svg>
+                    </span>
+                    <span>
+                        <span class="row-name">SteamDB Emu Tools</span>
+                        <span class="row-desc">Goldberg and STAR output</span>
+                    </span>
+                </button>
+            </aside>
+
+            <section class="detail" aria-label="Selected script">
+                <div class="detail-head">
+                    <div>
+                        <p class="kicker" id="kicker">01 / userscript</p>
+                        <h1 id="title">RINLink</h1>
+                        <p class="summary" id="summary">Adds a CS.RIN.RU topic link to Steam, SteamDB and PCGamingWiki pages.</p>
+                    </div>
+                    <div class="actions">
+                        <a class="install" id="install" href="rinlink.user.js">
+                            <svg
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M8 2.5v7.5m0 0 2.8-2.8M8 10 5.2 7.2M3 13h10" />
+                            </svg>
+                            Install
+                        </a>
+                    </div>
+                </div>
+
+                <dl class="specs">
+                    <div class="spec">
+                        <dt>Version</dt>
+                        <dd id="spec-version">–</dd>
+                    </div>
+                    <div class="spec">
+                        <dt>Size</dt>
+                        <dd id="spec-size">–</dd>
+                    </div>
+                    <div class="spec">
+                        <dt>Lines</dt>
+                        <dd id="spec-lines">–</dd>
+                    </div>
+                </dl>
+
+                <p class="hosts" id="hosts"><span>Runs on</span></p>
+
+                <ul class="notes" id="notes"></ul>
+
+                <div class="source" id="source">
+                    <div class="source-bar">
+                        <span class="file-name" id="file-name">rinlink.user.js</span>
+                        <span class="source-meta" id="source-meta"></span>
+                        <a class="source-open" id="source-open" href="rinlink.user.js" target="_blank" rel="noopener">Open</a>
+                    </div>
+                    <div class="code-scroll" id="code-scroll">
+                        <div class="code-grid">
+                            <div class="gutter" id="gutter" aria-hidden="true"></div>
+                            <pre><code id="code" class="language-javascript">Loading source...</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <script>
+            const boot = () => {
+                const scripts = [
+                    {
+                        id: 'rinlink',
+                        index: '01',
+                        name: 'RINLink',
+                        file: 'rinlink.user.js',
+                        summary: 'Adds a CS.RIN.RU topic link to Steam, SteamDB and PCGamingWiki pages.',
+                        hosts: ['store.steampowered.com', 'steamdb.info', 'pcgamingwiki.com', 'cs.rin.ru'],
+                        notes: [
+                            'Matches Steam app pages, SteamDB app pages and PCGamingWiki article pages.',
+                            'Searches cs.rin.ru in the background and keeps a match for 24 hours.',
+                            'Opens a verification tab only when the forum challenges the request.',
+                        ],
+                    },
+                    {
+                        id: 'steamdb-emu-tools',
+                        index: '02',
+                        name: 'SteamDB Emu Tools',
+                        file: 'steamdb-emu-tools.user.js',
+                        summary:
+                            'Adds DLC, language and achievement copy controls for Goldberg and STAR configs, with file downloads for languages and achievements.',
+                        hosts: ['steamdb.info'],
+                        notes: [
+                            'Matches SteamDB app pages.',
+                            'Copies DLC app ids, language lists and achievement JSON in Goldberg and STAR formats.',
+                            'Downloads achievements.json, supported_languages.txt or languages.star on request.',
+                            'Writes to the clipboard through GM_setClipboard.',
+                        ],
+                    },
+                ]
+
+                const el = id => document.getElementById(id)
+                const rows = [...document.querySelectorAll('.row')]
+                const titleEl = el('title')
+                const kickerEl = el('kicker')
+                const summaryEl = el('summary')
+                const installEl = el('install')
+                const versionEl = el('spec-version')
+                const sizeEl = el('spec-size')
+                const linesEl = el('spec-lines')
+                const hostsEl = el('hosts')
+                const notesEl = el('notes')
+                const fileEl = el('file-name')
+                const sourceMetaEl = el('source-meta')
+                const sourceOpenEl = el('source-open')
+                const codeEl = el('code')
+                const gutterEl = el('gutter')
+                const scrollEl = el('code-scroll')
+
+                const sources = new Map()
+                let current = null
+
+                const format = n => new Intl.NumberFormat('en-US').format(n)
+                const fileSize = text => {
+                    const bytes = new Blob([text]).size
+                    return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`
+                }
+
+                const versionOf = text => {
+                    const match = text.match(/^\/\/ @version\s+(.+)$/m)
+                    return match ? match[1].trim() : '–'
+                }
+
+                const paintGutter = lines => {
+                    const fragment = document.createDocumentFragment()
+                    for (let i = 1; i <= lines; i++) {
+                        const row = document.createElement('span')
+                        row.textContent = i
+                        fragment.appendChild(row)
+                    }
+                    gutterEl.replaceChildren(fragment)
+                }
+
+                const resetSource = script => {
+                    codeEl.textContent = 'Loading source...'
+                    gutterEl.replaceChildren()
+                    sourceMetaEl.textContent = ''
+                    versionEl.textContent = '–'
+                    sizeEl.textContent = '–'
+                    linesEl.textContent = '–'
+                    fileEl.textContent = script.file
+                    sourceOpenEl.href = script.file
+                    scrollEl.scrollTop = 0
+                    scrollEl.scrollLeft = 0
+                }
+
+                const loadSource = async script => {
+                    let text = sources.get(script.id)
+                    if (!text) {
+                        try {
+                            const response = await fetch(script.file, { cache: 'no-cache' })
+                            if (!response.ok) throw new Error(String(response.status))
+                            text = await response.text()
+                            sources.set(script.id, text)
+                        } catch (_) {
+                            if (current !== script.id) return
+                            codeEl.textContent = `Could not load ${script.file}. Use the Open link above.`
+                            sourceMetaEl.textContent = 'load failed'
+                            return
+                        }
+                    }
+                    if (current !== script.id) return
+
+                    const lines = text.split('\n').length
+                    versionEl.textContent = versionOf(text)
+                    sizeEl.textContent = fileSize(text)
+                    linesEl.textContent = format(lines)
+                    sourceMetaEl.textContent = `${format(lines)} lines · ${fileSize(text)}`
+
+                    codeEl.textContent = text
+                    if (window.Prism) Prism.highlightElement(codeEl)
+                    paintGutter(lines)
+                }
+
+                const select = script => {
+                    current = script.id
+                    kickerEl.textContent = `${script.index} / userscript`
+                    titleEl.textContent = script.name
+                    summaryEl.textContent = script.summary
+                    installEl.href = script.file
+
+                    hostsEl.replaceChildren(
+                        Object.assign(document.createElement('span'), { textContent: 'Runs on' }),
+                        ...script.hosts.map(host => Object.assign(document.createElement('span'), { textContent: host })),
+                    )
+
+                    notesEl.replaceChildren(
+                        ...script.notes.map(note => {
+                            const item = document.createElement('li')
+                            item.textContent = note
+                            return item
+                        }),
+                    )
+
+                    for (const row of rows) row.setAttribute('aria-current', String(row.dataset.id === script.id))
+                    history.replaceState(null, '', `#${script.id}`)
+                    resetSource(script)
+                    loadSource(script)
+                }
+
+                rows.forEach(row => {
+                    row.addEventListener('click', () => {
+                        const script = scripts.find(item => item.id === row.dataset.id)
+                        if (script && script.id !== current) select(script)
+                    })
+                })
+
+                document.querySelector('.index').addEventListener('keydown', event => {
+                    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+                    const at = rows.indexOf(document.activeElement)
+                    if (at === -1) return
+                    event.preventDefault()
+                    const next = rows[(at + (event.key === 'ArrowDown' ? 1 : rows.length - 1)) % rows.length]
+                    next.focus()
+                    next.click()
+                })
+
+                const fromHash = scripts.find(script => `#${script.id}` === location.hash)
+                const first = fromHash || scripts[0]
+                for (const row of rows) row.setAttribute('aria-current', String(row.dataset.id === first.id))
+                select(first)
+
+                window.addEventListener('hashchange', () => {
+                    const script = scripts.find(item => `#${item.id}` === location.hash)
+                    if (script && script.id !== current) select(script)
+                })
+
+                let pan = null
+                const endPan = () => {
+                    if (!pan) return
+                    pan = null
+                    scrollEl.classList.remove('is-panning')
+                }
+
+                scrollEl.addEventListener('mousedown', event => {
+                    if (event.button !== 1) return
+                    event.preventDefault()
+                    pan = { x: event.clientX, y: event.clientY, left: scrollEl.scrollLeft, top: scrollEl.scrollTop }
+                    scrollEl.classList.add('is-panning')
+                })
+                window.addEventListener('mousemove', event => {
+                    if (!pan) return
+                    scrollEl.scrollLeft = pan.left - (event.clientX - pan.x)
+                    scrollEl.scrollTop = pan.top - (event.clientY - pan.y)
+                })
+                window.addEventListener('mouseup', event => {
+                    if (event.button === 1) endPan()
+                })
+                window.addEventListener('blur', endPan)
+                scrollEl.addEventListener('auxclick', event => {
+                    if (event.button === 1) event.preventDefault()
+                })
+                document.addEventListener('keydown', event => {
+                    if (event.key === 'Escape') endPan()
+                })
+            }
+
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot)
+            else boot()
+        </script>
+    </body>
+</html>

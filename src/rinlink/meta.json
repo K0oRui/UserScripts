@@ -1,0 +1,17 @@
+{
+    "name": "RINLink",
+    "version": "1.0.0",
+    "description": "Adds CS.RIN.RU topic links to Steam, SteamDB and PCGamingWiki.",
+    "author": "K0oRui",
+    "namespace": "K0oRui",
+    "run-at": "document-idle",
+    "match": ["*://store.steampowered.com/app/*", "*://steamdb.info/app/*", "*://www.pcgamingwiki.com/wiki/*", "*://cs.rin.ru/*"],
+    "icon": "https://i.ibb.co/p1k6cq6/image.png",
+    "grant": ["GM_xmlhttpRequest", "GM_openInTab", "GM_setValue", "GM_getValue", "GM_deleteValue", "GM_listValues"],
+    "homepage": "https://github.com/K0oRui/UserScripts",
+    "homepageURL": "https://github.com/K0oRui/UserScripts",
+    "supportURL": "https://github.com/K0oRui/UserScripts/issues",
+    "updateURL": "https://github.com/K0oRui/UserScripts/raw/refs/heads/master/dist/rinlink.user.js",
+    "downloadURL": "https://github.com/K0oRui/UserScripts/raw/refs/heads/master/dist/rinlink.user.js",
+    "connect": "cs.rin.ru"
+}

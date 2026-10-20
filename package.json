@@ -1,0 +1,22 @@
+{
+  "name": "userscripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "check": "prettier --check . && eslint . && node --test",
+    "build": "npm run check && node scripts/build.mjs",
+    "build:fast": "node scripts/build.mjs",
+    "build:debug": "node scripts/build.mjs --debug",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "esbuild": "^0.28.1",
+    "eslint": "^9.0.0",
+    "globals": "^14.0.0",
+    "prettier": "^3.9.0"
+  }
+}

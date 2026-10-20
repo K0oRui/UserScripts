@@ -1,0 +1,15 @@
+{
+    "name": "SteamDB Emu Tools",
+    "version": "1.0.0",
+    "description": "Adds copy controls to SteamDB DLC, language and achievement sections, with file downloads for languages and achievements in Goldberg and STAR formats.",
+    "author": "K0oRui",
+    "namespace": "K0oRui",
+    "run-at": "document-idle",
+    "match": ["*://steamdb.info/app/*"],
+    "grant": ["GM_setClipboard"],
+    "homepage": "https://github.com/K0oRui/UserScripts",
+    "homepageURL": "https://github.com/K0oRui/UserScripts",
+    "supportURL": "https://github.com/K0oRui/UserScripts/issues",
+    "updateURL": "https://github.com/K0oRui/UserScripts/raw/refs/heads/master/dist/steamdb-emu-tools.user.js",
+    "downloadURL": "https://github.com/K0oRui/UserScripts/raw/refs/heads/master/dist/steamdb-emu-tools.user.js"
+}
