@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SteamDB Emu Tools
-// @version      1.1.0
-// @description  Adds copy controls to SteamDB DLC, language and achievement sections, with file downloads and achievement icon bundles in Goldberg and STAR formats.
+// @version      1.2.0
+// @description  Adds copy controls to SteamDB DLC, language and achievement sections, with Goldberg, STAR and ALI213 DLC formats, file downloads and achievement icon bundles.
 // @author       K0oRui
 // @namespace    K0oRui
 // @run-at       document-idle
@@ -56,6 +56,15 @@
     entries.map((e) => `${e.id}=${e.name}`).join("\n");
   var formatDlcStar = (entries) =>
     entries.map((e) => `dlc.${e.id} = ${e.name}`).join("\n");
+  var formatDlcAli213 = (entries) =>
+    entries.map((e) => `${e.id} = ${e.name}`).join("\n");
+  var formatDlcAli213Numbered = (entries) =>
+    entries
+      .flatMap((e, index) => {
+        const key = `DLC${String(index + 1).padStart(3, "0")}`;
+        return [`${key} = ${e.id}`, `${key}Name = ${e.name}`];
+      })
+      .join("\n");
 
   // src/steamdb-emu-tools/langs.js
   var LANG_MAP = {
@@ -308,6 +317,17 @@
     askChoice(label, "Goldberg or STAR?", [
       { value: "goldberg", label: "Goldberg" },
       { value: "star", label: "STAR" },
+    ]);
+  var askDlcTarget = (label) =>
+    askChoice(label, "Goldberg, STAR, or ALI213?", [
+      { value: "goldberg", label: "Goldberg" },
+      { value: "star", label: "STAR" },
+      { value: "ali213", label: "ALI213" },
+    ]);
+  var askAli213Layout = (label) =>
+    askChoice(label, "Plain or numbered?", [
+      { value: "plain", label: "Plain list" },
+      { value: "numbered", label: "Numbered entries" },
     ]);
   var askOutput = (label) =>
     askChoice(label, "File or clipboard?", [
@@ -1278,14 +1298,29 @@
         flash(btn, "No DLC rows found", "Copy DLC list");
         return;
       }
-      const target = await askTarget("Copy DLC list");
+      const target = await askDlcTarget("Copy DLC list");
       if (!target) return;
-      const text =
-        target === "star" ? formatDlcStar(entries) : formatDlcGoldberg(entries);
+      let text;
+      let label;
+      if (target === "ali213") {
+        const layout = await askAli213Layout("Copy DLC list");
+        if (!layout) return;
+        text =
+          layout === "numbered"
+            ? formatDlcAli213Numbered(entries)
+            : formatDlcAli213(entries);
+        label = layout === "numbered" ? "ALI213 numbered" : "ALI213";
+      } else if (target === "star") {
+        text = formatDlcStar(entries);
+        label = "STAR";
+      } else {
+        text = formatDlcGoldberg(entries);
+        label = "Goldberg";
+      }
       const ok = await copyText(text);
       flash(
         btn,
-        ok ? `Copied ${entries.length} lines (${target})` : "Copy failed",
+        ok ? `Copied ${entries.length} lines (${label})` : "Copy failed",
         "Copy DLC list",
       );
     });

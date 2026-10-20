@@ -78,6 +78,19 @@ export const askTarget = label =>
         { value: 'star', label: 'STAR' },
     ])
 
+export const askDlcTarget = label =>
+    askChoice(label, 'Goldberg, STAR, or ALI213?', [
+        { value: 'goldberg', label: 'Goldberg' },
+        { value: 'star', label: 'STAR' },
+        { value: 'ali213', label: 'ALI213' },
+    ])
+
+export const askAli213Layout = label =>
+    askChoice(label, 'Plain or numbered?', [
+        { value: 'plain', label: 'Plain list' },
+        { value: 'numbered', label: 'Numbered entries' },
+    ])
+
 export const askOutput = label =>
     askChoice(label, 'File or clipboard?', [
         { value: 'file', label: 'Download file' },

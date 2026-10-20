@@ -1,7 +1,7 @@
-import { parseDlcRows, formatDlcGoldberg, formatDlcStar } from './dlc.js'
+import { parseDlcRows, formatDlcGoldberg, formatDlcStar, formatDlcAli213, formatDlcAli213Numbered } from './dlc.js'
 import { parseLangRows, formatLangGoldberg, formatLangStar } from './langs.js'
 import { parseAchievementRows, formatAchievementsGoldberg, formatAchievementsStar } from './achievements.js'
-import { askTarget, askOutput, askAchievementOutput } from './popup.js'
+import { askTarget, askDlcTarget, askAli213Layout, askOutput, askAchievementOutput } from './popup.js'
 import { fileName, downloadText, downloadBytes } from './output.js'
 import { buildAchievementZip, appIdFromLocation } from './zip.js'
 import { ensureStyles } from './styles.js'
@@ -74,11 +74,24 @@ const mountDlcButton = () => {
             flash(btn, 'No DLC rows found', 'Copy DLC list')
             return
         }
-        const target = await askTarget('Copy DLC list')
+        const target = await askDlcTarget('Copy DLC list')
         if (!target) return
-        const text = target === 'star' ? formatDlcStar(entries) : formatDlcGoldberg(entries)
+        let text
+        let label
+        if (target === 'ali213') {
+            const layout = await askAli213Layout('Copy DLC list')
+            if (!layout) return
+            text = layout === 'numbered' ? formatDlcAli213Numbered(entries) : formatDlcAli213(entries)
+            label = layout === 'numbered' ? 'ALI213 numbered' : 'ALI213'
+        } else if (target === 'star') {
+            text = formatDlcStar(entries)
+            label = 'STAR'
+        } else {
+            text = formatDlcGoldberg(entries)
+            label = 'Goldberg'
+        }
         const ok = await copyText(text)
-        flash(btn, ok ? `Copied ${entries.length} lines (${target})` : 'Copy failed', 'Copy DLC list')
+        flash(btn, ok ? `Copied ${entries.length} lines (${label})` : 'Copy failed', 'Copy DLC list')
     })
 
     heading.classList.add('steamdb-emu-tools-heading')

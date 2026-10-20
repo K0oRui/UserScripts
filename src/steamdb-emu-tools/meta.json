@@ -1,7 +1,7 @@
 {
     "name": "SteamDB Emu Tools",
-    "version": "1.1.0",
-    "description": "Adds copy controls to SteamDB DLC, language and achievement sections, with file downloads and achievement icon bundles in Goldberg and STAR formats.",
+    "version": "1.2.0",
+    "description": "Adds copy controls to SteamDB DLC, language and achievement sections, with Goldberg, STAR and ALI213 DLC formats, file downloads and achievement icon bundles.",
     "author": "K0oRui",
     "namespace": "K0oRui",
     "run-at": "document-idle",

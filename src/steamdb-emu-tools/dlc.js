@@ -20,3 +20,13 @@ export const parseDlcRows = root => {
 export const formatDlcGoldberg = entries => entries.map(e => `${e.id}=${e.name}`).join('\n')
 
 export const formatDlcStar = entries => entries.map(e => `dlc.${e.id} = ${e.name}`).join('\n')
+
+export const formatDlcAli213 = entries => entries.map(e => `${e.id} = ${e.name}`).join('\n')
+
+export const formatDlcAli213Numbered = entries =>
+    entries
+        .flatMap((e, index) => {
+            const key = `DLC${String(index + 1).padStart(3, '0')}`
+            return [`${key} = ${e.id}`, `${key}Name = ${e.name}`]
+        })
+        .join('\n')

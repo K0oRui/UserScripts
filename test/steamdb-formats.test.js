@@ -1,8 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { formatDlcGoldberg, formatDlcStar } from '../src/steamdb-emu-tools/dlc.js'
+import { formatDlcGoldberg, formatDlcStar, formatDlcAli213, formatDlcAli213Numbered } from '../src/steamdb-emu-tools/dlc.js'
 import { formatLangGoldberg, formatLangStar } from '../src/steamdb-emu-tools/langs.js'
-import { askTarget, askOutput, askAchievementOutput } from '../src/steamdb-emu-tools/popup.js'
+import { askTarget, askDlcTarget, askAli213Layout, askOutput, askAchievementOutput } from '../src/steamdb-emu-tools/popup.js'
 
 test('formatDlcGoldberg emits ID=NAME lines for configs.app.ini', () => {
     assert.equal(formatDlcGoldberg([{ id: '3279970', name: 'DAIMA PACK' }]), '3279970=DAIMA PACK')
@@ -10,6 +10,26 @@ test('formatDlcGoldberg emits ID=NAME lines for configs.app.ini', () => {
 
 test('formatDlcStar emits dlc.ID = Name lines for game.star', () => {
     assert.equal(formatDlcStar([{ id: '3279970', name: 'DAIMA PACK' }]), 'dlc.3279970 = DAIMA PACK')
+})
+
+test('formatDlcAli213 emits ID = Name lines', () => {
+    assert.equal(
+        formatDlcAli213([
+            { id: '245620', name: 'Half-Life 2: Lost Coast' },
+            { id: '245630', name: 'Half-Life 2: Episode One' },
+        ]),
+        '245620 = Half-Life 2: Lost Coast\n245630 = Half-Life 2: Episode One',
+    )
+})
+
+test('formatDlcAli213Numbered emits numbered ID and Name pairs', () => {
+    assert.equal(
+        formatDlcAli213Numbered([
+            { id: '245620', name: 'Half-Life 2: Lost Coast' },
+            { id: '245630', name: 'Half-Life 2: Episode One' },
+        ]),
+        'DLC001 = 245620\nDLC001Name = Half-Life 2: Lost Coast\nDLC002 = 245630\nDLC002Name = Half-Life 2: Episode One',
+    )
 })
 
 test('formatLangGoldberg emits one token per line for supported_languages.txt', () => {
@@ -108,6 +128,28 @@ test('askTarget resolves star and removes the popup', async () => {
         findButton(overlay, 'STAR').fire('click', {})
         assert.equal(await pending, 'star')
         assert.equal(overlay.removed, true)
+    })
+})
+
+test('askDlcTarget resolves ALI213', async () => {
+    await withFakeDom(async ({ els }) => {
+        const pending = askDlcTarget('Copy DLC list')
+        findButton(els[0], 'ALI213').fire('click', {})
+        assert.equal(await pending, 'ali213')
+    })
+})
+
+test('askAli213Layout resolves plain and numbered', async () => {
+    await withFakeDom(async ({ els }) => {
+        const active = () => els.find(e => e.id === 'steamdb-copy-target-overlay' && !e.removed)
+
+        const p1 = askAli213Layout('Copy DLC list')
+        findButton(active(), 'Plain list').fire('click', {})
+        assert.equal(await p1, 'plain')
+
+        const p2 = askAli213Layout('Copy DLC list')
+        findButton(active(), 'Numbered entries').fire('click', {})
+        assert.equal(await p2, 'numbered')
     })
 })
 
