@@ -13,8 +13,6 @@ const directText = cell => {
     return clean(parts.join(' '))
 }
 
-const grayName = (icon, gray) => gray || (icon ? icon.replace(/(\.[^.]+)?$/, '_gray$1') : '')
-
 const parseCards = root => {
     if (!root || typeof root.querySelectorAll !== 'function') return []
     const cards = root.querySelectorAll('#js-achievements .achievement')
@@ -30,7 +28,7 @@ const parseCards = root => {
             const spoiler = clean(desc?.querySelector?.('.achievement_spoiler')?.textContent)
             const description = hidden ? spoiler || clean(descText.replace(/^hidden achievement:?\s*/i, '')) : descText
             const icon = attr(find('.achievement_image'), 'data-name')
-            const icongray = grayName(icon, attr(find('.achievement_image_small'), 'data-name'))
+            const icongray = attr(find('.achievement_image_small'), 'data-name')
             if (!name || !displayName) return null
             return { name, displayName, description, hidden: hidden ? '1' : '0', icon, icongray }
         })
@@ -54,7 +52,7 @@ const parseTable = root => {
             const iconCell = cells[2]
             const images = iconCell && typeof iconCell.querySelectorAll === 'function' ? iconCell.querySelectorAll('img') : []
             const icon = attr(images[0], 'data-name')
-            const icongray = grayName(icon, attr(images[1], 'data-name'))
+            const icongray = attr(images[1], 'data-name')
             if (!name || !displayName || images.length === 0) return null
             return { name, displayName, description, hidden, icon, icongray }
         })
@@ -86,8 +84,8 @@ export const formatAchievementsStar = entries =>
             name: e.name,
             displayName: e.displayName,
             description: e.description,
-            icon: withDir('Icons', e.icon),
-            icongray: withDir('Icons', e.icongray),
+            icon: withDir('icons', e.icon),
+            icongray: withDir('icons', e.icongray),
             hidden: e.hidden,
         })),
         null,

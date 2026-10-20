@@ -16,7 +16,7 @@ Adds CS.RIN.RU topic links to Steam, SteamDB and PCGamingWiki.
 
 ### SteamDB Emu Tools
 
-Adds copy buttons to the DLC, supported languages and achievements sections of SteamDB app pages, with Goldberg and STAR output. Languages and achievements can also be downloaded as files.
+Adds copy buttons to the DLC, supported languages and achievements sections of SteamDB app pages, with Goldberg and STAR output. Languages can be downloaded as files, and achievements as JSON or as a ZIP with the icon files.
 
 **Supported sites:** `steamdb.info/app/*`
 

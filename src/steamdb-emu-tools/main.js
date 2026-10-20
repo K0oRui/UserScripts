@@ -1,8 +1,9 @@
 import { parseDlcRows, formatDlcGoldberg, formatDlcStar } from './dlc.js'
 import { parseLangRows, formatLangGoldberg, formatLangStar } from './langs.js'
 import { parseAchievementRows, formatAchievementsGoldberg, formatAchievementsStar } from './achievements.js'
-import { askTarget, askOutput } from './popup.js'
-import { fileName, downloadText } from './output.js'
+import { askTarget, askOutput, askAchievementOutput } from './popup.js'
+import { fileName, downloadText, downloadBytes } from './output.js'
+import { buildAchievementZip, appIdFromLocation } from './zip.js'
 import { ensureStyles } from './styles.js'
 
 const DLC_BUTTON_ID = 'steamdb-emu-tools-dlc-btn'
@@ -48,14 +49,15 @@ const makeButton = (id, label) => {
     return btn
 }
 
-const flash = (btn, text, revert) => {
+const flash = (btn, text, revert, ms = 2000) => {
     const label = btn.querySelector('.steamdb-emu-tools-btn-label')
     if (label) label.textContent = text
     else btn.textContent = text
-    setTimeout(() => {
+    clearTimeout(btn._steamdbEmuFlash)
+    btn._steamdbEmuFlash = setTimeout(() => {
         if (label) label.textContent = revert
         else btn.textContent = revert
-    }, 2000)
+    }, ms)
 }
 
 const mountDlcButton = () => {
@@ -135,13 +137,24 @@ const mountAchievementsButton = () => {
         }
         const target = await askTarget('Copy achievements')
         if (!target) return
-        const output = await askOutput('Copy achievements')
+        const output = await askAchievementOutput('Copy achievements')
         if (!output) return
         const text = target === 'star' ? formatAchievementsStar(entries) : formatAchievementsGoldberg(entries)
-        if (output === 'file') {
+        if (output === 'json') {
             const name = fileName('achievements', target)
             const ok = downloadText(name, text, 'application/json')
             flash(btn, ok ? `Saved ${name}` : 'Download failed', 'Copy achievements')
+            return
+        }
+        if (output === 'zip') {
+            flash(btn, 'Bundling icons...', 'Copy achievements', 300_000)
+            try {
+                const zip = await buildAchievementZip(target, text, entries, appIdFromLocation())
+                const ok = downloadBytes('achievements.zip', zip)
+                flash(btn, ok ? 'Saved achievements.zip' : 'Download failed', 'Copy achievements')
+            } catch {
+                flash(btn, 'Icon download failed', 'Copy achievements')
+            }
             return
         }
         const ok = await copyText(text)

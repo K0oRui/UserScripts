@@ -4,9 +4,8 @@ export const fileName = (kind, target) => {
     return null
 }
 
-export const downloadText = (name, text, type = 'text/plain') => {
+export const downloadBlob = (name, blob) => {
     try {
-        const blob = new Blob([text], { type })
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
@@ -21,3 +20,7 @@ export const downloadText = (name, text, type = 'text/plain') => {
         return false
     }
 }
+
+export const downloadText = (name, text, type = 'text/plain') => downloadBlob(name, new Blob([text], { type }))
+
+export const downloadBytes = (name, bytes, type = 'application/zip') => downloadBlob(name, new Blob([bytes], { type }))

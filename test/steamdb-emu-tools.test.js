@@ -1,7 +1,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { unzipSync } from 'fflate'
 import { parseDlcRows, formatDlcGoldberg } from '../src/steamdb-emu-tools/dlc.js'
 import { parseAchievementRows, formatAchievementsGoldberg, formatAchievementsStar } from '../src/steamdb-emu-tools/achievements.js'
+import { buildAchievementZip } from '../src/steamdb-emu-tools/zip.js'
 import { fileName } from '../src/steamdb-emu-tools/output.js'
 
 const cell = text => ({ textContent: text })
@@ -166,6 +168,20 @@ test('parseAchievementRows extracts achievement fields', () => {
     ])
 })
 
+test('parseAchievementRows leaves icongray empty when no gray icon is shown', () => {
+    const root = cardsRoot([achievementCard({ name: 'NO_GRAY', displayName: 'No Gray', icon: 'main.jpg' })])
+    assert.deepEqual(parseAchievementRows(root), [
+        {
+            name: 'NO_GRAY',
+            displayName: 'No Gray',
+            description: '',
+            hidden: '0',
+            icon: 'main.jpg',
+            icongray: '',
+        },
+    ])
+})
+
 test('parseAchievementRows flags hidden rows and strips the marker', () => {
     const root = legacyRoot([
         achievementRow({
@@ -238,8 +254,8 @@ test('formatAchievementsStar writes the STAR JSON shape', () => {
     "name": "ACH_WIN_ONE_GAME",
     "displayName": "Winner",
     "description": "Win your first game.",
-    "icon": "Icons/win.png",
-    "icongray": "Icons/win_gray.png",
+    "icon": "icons/win.png",
+    "icongray": "icons/win_gray.png",
     "hidden": "0"
   }
 ]`,
@@ -249,6 +265,82 @@ test('formatAchievementsStar writes the STAR JSON shape', () => {
 test('formatAchievementsGoldberg and Star return an empty array for no entries', () => {
     assert.equal(formatAchievementsGoldberg([]), '[]')
     assert.equal(formatAchievementsStar([]), '[]')
+})
+
+test('buildAchievementZip writes Goldberg JSON and icons under steam_settings', async () => {
+    const entries = [
+        { icon: 'win.jpg', icongray: 'win_gray.jpg' },
+        { icon: 'win.jpg', icongray: 'win_gray.jpg' },
+    ]
+    const zip = await buildAchievementZip('goldberg', '{"ok":true}', entries, '730', async name => new TextEncoder().encode(name))
+    const files = unzipSync(zip)
+
+    assert.deepEqual(Object.keys(files).sort(), [
+        'steam_settings/',
+        'steam_settings/achievements.json',
+        'steam_settings/images/',
+        'steam_settings/images/win.jpg',
+        'steam_settings/images/win_gray.jpg',
+    ])
+    assert.equal(new TextDecoder().decode(files['steam_settings/achievements.json']), '{"ok":true}')
+    assert.equal(new TextDecoder().decode(files['steam_settings/images/win.jpg']), 'win.jpg')
+})
+
+test('buildAchievementZip writes STAR JSON and icons under STAR', async () => {
+    const entries = [{ icon: 'win.png', icongray: 'win_gray.png' }]
+    const zip = await buildAchievementZip('star', '[]', entries, '730', async name => new TextEncoder().encode(name))
+    const files = unzipSync(zip)
+
+    assert.deepEqual(Object.keys(files).sort(), ['STAR/', 'STAR/achievements.json', 'STAR/icons/', 'STAR/icons/win.png', 'STAR/icons/win_gray.png'])
+    assert.equal(new TextDecoder().decode(files['STAR/icons/win_gray.png']), 'win_gray.png')
+})
+
+test('buildAchievementZip omits a gray icon that cannot be fetched', async () => {
+    const entries = [
+        {
+            name: 'WIN',
+            displayName: 'Winner',
+            description: 'Win.',
+            hidden: '0',
+            icon: 'win.jpg',
+            icongray: 'win_gray.jpg',
+        },
+    ]
+    const zip = await buildAchievementZip('goldberg', formatAchievementsGoldberg(entries), entries, '730', async name => {
+        if (name === 'win_gray.jpg') throw new Error('HTTP 404')
+        return new TextEncoder().encode(name)
+    })
+    const files = unzipSync(zip)
+
+    assert.deepEqual(Object.keys(files).sort(), [
+        'steam_settings/',
+        'steam_settings/achievements.json',
+        'steam_settings/images/',
+        'steam_settings/images/win.jpg',
+    ])
+    const written = JSON.parse(new TextDecoder().decode(files['steam_settings/achievements.json']))
+    assert.equal(written[0].icon, 'images/win.jpg')
+    assert.equal(written[0].icongray, '')
+})
+
+test('buildAchievementZip fails when a main icon cannot be fetched', async () => {
+    const entries = [{ icon: 'win.jpg', icongray: '' }]
+    await assert.rejects(
+        buildAchievementZip('goldberg', '[]', entries, '730', async () => {
+            throw new Error('HTTP 404')
+        }),
+        /HTTP 404/,
+    )
+})
+
+test('buildAchievementZip skips icon downloads when entries have no icons', async () => {
+    const entries = [{ icon: '', icongray: '' }]
+    const zip = await buildAchievementZip('goldberg', '[]', entries, '', async () => {
+        throw new Error('should not fetch')
+    })
+    const files = unzipSync(zip)
+
+    assert.deepEqual(Object.keys(files).sort(), ['steam_settings/', 'steam_settings/achievements.json', 'steam_settings/images/'])
 })
 
 test('fileName returns the expected download names', () => {

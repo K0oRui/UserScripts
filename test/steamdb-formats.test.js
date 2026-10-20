@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { formatDlcGoldberg, formatDlcStar } from '../src/steamdb-emu-tools/dlc.js'
 import { formatLangGoldberg, formatLangStar } from '../src/steamdb-emu-tools/langs.js'
-import { askTarget, askOutput } from '../src/steamdb-emu-tools/popup.js'
+import { askTarget, askOutput, askAchievementOutput } from '../src/steamdb-emu-tools/popup.js'
 
 test('formatDlcGoldberg emits ID=NAME lines for configs.app.ini', () => {
     assert.equal(formatDlcGoldberg([{ id: '3279970', name: 'DAIMA PACK' }]), '3279970=DAIMA PACK')
@@ -141,5 +141,23 @@ test('askOutput resolves file and clipboard', async () => {
         const overlay = els.find(e => e.id === 'steamdb-copy-target-overlay' && !e.removed)
         findButton(overlay, 'Copy to clipboard').fire('click', {})
         assert.equal(await p2, 'clipboard')
+    })
+})
+
+test('askAchievementOutput resolves json, zip, and clipboard', async () => {
+    await withFakeDom(async ({ els }) => {
+        const active = () => els.find(e => e.id === 'steamdb-copy-target-overlay' && !e.removed)
+
+        const p1 = askAchievementOutput('Copy achievements')
+        findButton(active(), 'Download JSON').fire('click', {})
+        assert.equal(await p1, 'json')
+
+        const p2 = askAchievementOutput('Copy achievements')
+        findButton(active(), 'Download with icons').fire('click', {})
+        assert.equal(await p2, 'zip')
+
+        const p3 = askAchievementOutput('Copy achievements')
+        findButton(active(), 'Copy to clipboard').fire('click', {})
+        assert.equal(await p3, 'clipboard')
     })
 })

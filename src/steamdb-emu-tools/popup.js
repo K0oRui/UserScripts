@@ -83,3 +83,10 @@ export const askOutput = label =>
         { value: 'file', label: 'Download file' },
         { value: 'clipboard', label: 'Copy to clipboard' },
     ])
+
+export const askAchievementOutput = label =>
+    askChoice(label, 'Download or copy?', [
+        { value: 'zip', label: 'Download with icons' },
+        { value: 'json', label: 'Download JSON' },
+        { value: 'clipboard', label: 'Copy to clipboard' },
+    ])
